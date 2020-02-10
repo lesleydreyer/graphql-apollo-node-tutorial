@@ -7,6 +7,7 @@ const dotEnv = require('dotenv');
 dotEnv.config();
 
 const resolvers = require('./resolvers');
+const typeDefs = require('./typeDefs')
 
 // set up express app
 const app = express();
@@ -16,47 +17,6 @@ app.use(cors());
 
 // body parser middleware
 app.use(express.json());
-
-// defining schema
-// ! means non nullable so will get a gql error if resolves to null results
-// String! string variable cannot be null
-// [String!]! list cannot be null, and every item in it cannot be null
-// [String!] list can be null, but any items in it cannot be null
-// user has one or more tasks
-// user has 1 to many relationship w/ task
-// task gets one user
-// task has many to 1 relationship w/ user
-// task(id: ID!) expects client to send an id as an argument so it can return a task
-const typeDefs = gql`
-    type Query {
-        greetings: [String!]
-        tasks: [Task!]
-        task(id: ID!): Task
-        users: [User!]
-        user(id: ID!): User
-    }
-    input createTaskInput {
-        name: String!
-        completed: Boolean!
-        userId: ID!
-    }
-    type Mutation {
-        createTask(input: createTaskInput!): Task
-    }
-    type User {
-        id: ID!
-        name: String!
-        email: String!
-        tasks: [Task!]
-    }
-    type Task {
-        id: ID!
-        name: String!
-        completed: Boolean!
-        user: User!
-    }
-`;
-
 
 const apolloServer = new ApolloServer({
     typeDefs, // defining schema
