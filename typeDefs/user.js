@@ -11,8 +11,7 @@ const { gql } = require('apollo-server-express')
 // task(id: ID!) expects client to send an id as an argument so it can return a task
 module.exports = gql`
     extend type Query {
-        users: [User!]
-        user(id: ID!): User
+        user: User
     }
     extend type Mutation {
         signup(input: signupInput): User

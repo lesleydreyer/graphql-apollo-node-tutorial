@@ -2,17 +2,24 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { combineResolvers } = require('graphql-resolvers');
 
-const { users, tasks } = require('../constants');
 const User = require('../database/models/user');
+const Task = require('../database/models/task');
 const { isAuthenticated } = require('./middleware');
 
 
 module.exports = {
     Query: {
-        users: () => users,
-        user: combineResolvers(isAuthenticated, (_, { id }, { email }) => {
-            console.log('===', email)
-            return users.find(user => user.id === id)
+        user: combineResolvers(isAuthenticated, async (_, __, { email }) => {
+            try {
+                const user = await User.findOne({ email });
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                return user;
+            } catch (err) {
+                console.log(err);
+                throw err;
+            }
         })
     },
     Mutation: {
@@ -35,6 +42,7 @@ module.exports = {
         login: async (_, { input }) => {
             try {
                 const user = await User.findOne({ email: input.email });
+                console.log('user===', user)
                 if (!user) {
                     throw new Error('User not found');
                 }
@@ -52,7 +60,15 @@ module.exports = {
         }
     },
     User: {
-        tasks: ({ id }) => tasks.filter(task => task.userId === id),// expected iterable but not find one so change from find to filter because find returns an obj and filter returns array of obj
+        tasks: async ({ id }) => {
+            try {
+                const tasks = await Task.find({ user: id });
+                return tasks;
+            } catch (err) {
+                console.log(err);
+                throw err;
+            }
+        }
     }
 }
 
