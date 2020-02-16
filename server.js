@@ -9,6 +9,7 @@ dotEnv.config();
 const resolvers = require('./resolvers');
 const typeDefs = require('./typeDefs');
 const { connection } = require('./database/util');
+const { verifyUser } = require('./helper/context');
 
 // set up express app
 const app = express();
@@ -25,9 +26,10 @@ app.use(express.json());
 const apolloServer = new ApolloServer({
     typeDefs, // defining schema
     resolvers, // how you get the data for particular schema
-    context: () => { //can also define as obj instead of function but then would run the same rand each time
+    context: async ({ req }) => { //can also define as obj instead of function but then would run the same rand each time
+        await verifyUser(req);
         console.log('context ran===');
-        return { email: "test@gmail.com" + Math.random() }
+        return { email: req.email }
     }
 })
 
