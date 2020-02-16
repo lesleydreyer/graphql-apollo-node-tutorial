@@ -24,7 +24,11 @@ app.use(express.json());
 
 const apolloServer = new ApolloServer({
     typeDefs, // defining schema
-    resolvers // how you get the data for particular schema
+    resolvers, // how you get the data for particular schema
+    context: () => { //can also define as obj instead of function but then would run the same rand each time
+        console.log('context ran===');
+        return { email: "test@gmail.com" + Math.random() }
+    }
 })
 
 apolloServer.applyMiddleware({ app, path: '/graphql' });
