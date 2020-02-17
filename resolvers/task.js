@@ -4,17 +4,28 @@ const { combineResolvers } = require('graphql-resolvers');
 const { users, tasks } = require('../constants');
 const Task = require('../database/models/task');
 const User = require('../database/models/user');
-const { isAuthenticated } = require('./middleware');
+const { isAuthenticated, isTaskOwner } = require('./middleware');
 
 module.exports = {
     Query: {
-        tasks: () => {
-            return tasks;
-        },
-        task: (_, { id }) => { // _ means not using the first arg of the parent 
-            // console.log(typeof (id)); // serialized as a string even if you send number in gql
-            return tasks.find(task => task.id === id);
-        }, // id destructured from args
+        tasks: combineResolvers(isAuthenticated, async (_, __, { loggedInUserId }) => {
+            try {
+                const tasks = await Task.find({ user: loggedInUserId });//other option is .populate(path:'user') will be discussed in data loaders section
+                return tasks;
+            } catch (err) {
+                console.log(err);
+                throw err;
+            }
+        }),
+        task: combineResolvers(isAuthenticated, isTaskOwner, async (_, { id }) => {
+            try {
+                const task = await Task.findById(id);
+                return task;
+            } catch (err) {
+                console.log(err);
+                throw err;
+            }
+        }),
     },
     Mutation: {
         createTask: combineResolvers(isAuthenticated, async (_, { input }, { email }) => { // email context obj
@@ -38,11 +49,14 @@ module.exports = {
         // FIELD LEVEL RESOLVER - takes higher priority than query resolvers
         // but if you don't request the user on gql playground you'll just get regular info
         // name: () => "test-task" // this field resolver would change name of task in gql playground
-        user: ({ userId }) => { // destructuring userId from parent.userId
-            return users.find(user => {
-                // console.log('ids', user.id, userId);
-                return user.id === userId
-            })
+        user: async (parent) => { // destructuring userId from parent.userId
+            try {
+                const user = User.findById(parent.user);
+                return user;
+            } catch (err) {
+                console.log(err);
+                throw err;
+            }
         }
     }
 }

@@ -29,7 +29,10 @@ const apolloServer = new ApolloServer({
     context: async ({ req }) => { //can also define as obj instead of function but then would run the same rand each time
         await verifyUser(req);
         // console.log('context ran===');
-        return { email: req.email }
+        return {
+            email: req.email,
+            loggedInUserId: req.loggedInUserId
+        }
     }
 })
 
