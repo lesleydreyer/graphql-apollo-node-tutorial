@@ -28,7 +28,7 @@ const apolloServer = new ApolloServer({
     resolvers, // how you get the data for particular schema
     context: async ({ req }) => { //can also define as obj instead of function but then would run the same rand each time
         await verifyUser(req);
-        console.log('context ran===');
+        // console.log('context ran===');
         return { email: req.email }
     }
 })
