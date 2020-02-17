@@ -11,7 +11,7 @@ const { gql } = require('apollo-server-express');
 // task(id: ID!) expects client to send an id as an argument so it can return a task
 module.exports = gql`
     extend type Query {
-        tasks: [Task!]
+        tasks(skip: Int, limit: Int): [Task!]
         task(id: ID!): Task
     }
     input createTaskInput {

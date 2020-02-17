@@ -8,9 +8,10 @@ const { isAuthenticated, isTaskOwner } = require('./middleware');
 
 module.exports = {
     Query: {
-        tasks: combineResolvers(isAuthenticated, async (_, __, { loggedInUserId }) => {
+        // offset limit pagination w skip & limit - cons are duplicate records and performance
+        tasks: combineResolvers(isAuthenticated, async (_, { skip = 0, limit = 10 }, { loggedInUserId }) => {
             try {
-                const tasks = await Task.find({ user: loggedInUserId });//other option is .populate(path:'user') will be discussed in data loaders section
+                const tasks = await Task.find({ user: loggedInUserId }).sort({ _id: -1 }).skip(skip).limit(limit);//other option is .populate(path:'user') will be discussed in data loaders section
                 return tasks;
             } catch (err) {
                 console.log(err);
