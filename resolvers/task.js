@@ -1,18 +1,31 @@
-const uuid = require('uuid');
 const { combineResolvers } = require('graphql-resolvers');
 
-const { users, tasks } = require('../constants');
 const Task = require('../database/models/task');
 const User = require('../database/models/user');
 const { isAuthenticated, isTaskOwner } = require('./middleware');
+const { stringToBase64, base64ToString } = require('../helper');
 
 module.exports = {
     Query: {
         // offset limit pagination w skip & limit - cons are duplicate records and performance
-        tasks: combineResolvers(isAuthenticated, async (_, { skip = 0, limit = 10 }, { loggedInUserId }) => {
+        tasks: combineResolvers(isAuthenticated, async (_, { cursor, limit = 10 }, { loggedInUserId }) => {
             try {
-                const tasks = await Task.find({ user: loggedInUserId }).sort({ _id: -1 }).skip(skip).limit(limit);//other option is .populate(path:'user') will be discussed in data loaders section
-                return tasks;
+                const query = { user: loggedInUserId };
+                if (cursor) {
+                    query['_id'] = {// $lt is less than
+                        '$lt': base64ToString(cursor)
+                    }
+                }
+                let tasks = await Task.find(query).sort({ _id: -1 }).limit(limit + 1);//other option is .populate(path:'user') will be discussed in data loaders section
+                let hasNextPage = tasks.length > limit;
+                tasks = hasNextPage ? tasks.slice(0, 1) : tasks;
+                return {
+                    taskFeed: tasks,
+                    pageInfo: {
+                        nextPageCursor: hasNextPage ? stringToBase64(tasks[tasks.length - 1].id) : null,
+                        hasNextPage
+                    }
+                };
             } catch (err) {
                 console.log(err);
                 throw err;
