@@ -82,9 +82,10 @@ module.exports = {
         // FIELD LEVEL RESOLVER - takes higher priority than query resolvers
         // but if you don't request the user on gql playground you'll just get regular info
         // name: () => "test-task" // this field resolver would change name of task in gql playground
-        user: async (parent) => { // destructuring userId from parent.userId
+        user: async (parent, _, { loaders }) => { // destructuring userId from parent.userId
             try {
-                const user = User.findById(parent.user);
+                // const user = User.findById(parent.user);
+                const user = await loaders.user.load(parent.user.toString());
                 return user;
             } catch (err) {
                 console.log(err);

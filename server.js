@@ -2,6 +2,7 @@ const express = require('express');
 const { ApolloServer, gql } = require('apollo-server-express');
 const cors = require('cors');
 const dotEnv = require('dotenv');
+const Dataloader = require('dataloader');
 
 // set up env variables (looks for .env in root dir)
 dotEnv.config();
@@ -10,6 +11,7 @@ const resolvers = require('./resolvers');
 const typeDefs = require('./typeDefs');
 const { connection } = require('./database/util');
 const { verifyUser } = require('./helper/context');
+const loaders = require('./loaders');
 
 // set up express app
 const app = express();
@@ -28,10 +30,12 @@ const apolloServer = new ApolloServer({
     resolvers, // how you get the data for particular schema
     context: async ({ req }) => { //can also define as obj instead of function but then would run the same rand each time
         await verifyUser(req);
-        // console.log('context ran===');
         return {
             email: req.email,
-            loggedInUserId: req.loggedInUserId
+            loggedInUserId: req.loggedInUserId,
+            loaders: {
+                user: new Dataloader(keys => loaders.user.batchUsers(keys))
+            }
         }
     }
 })
