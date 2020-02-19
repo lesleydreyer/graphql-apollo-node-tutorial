@@ -10,6 +10,9 @@ type Query {
 type Mutation {
     _: String
 }
+type Subscription {
+    _: String
+}
 `
 
 module.exports = [

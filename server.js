@@ -28,15 +28,17 @@ app.use(express.json());
 const apolloServer = new ApolloServer({
     typeDefs, // defining schema
     resolvers, // how you get the data for particular schema
-    context: async ({ req }) => { //can also define as obj instead of function but then would run the same rand each time
-        await verifyUser(req);
-        return {
-            email: req.email,
-            loggedInUserId: req.loggedInUserId,
-            loaders: {
-                user: new Dataloader(keys => loaders.user.batchUsers(keys))
-            }
+    context: async ({ req, connection }) => { //can also define as obj instead of function but then would run the same rand each time
+        const contextObj = {};
+        if (req) {
+            await verifyUser(req);
+            contextObj.email = req.email;
+            loggedInUserId = req.loggedInUserId;
         }
+        contextObj.loaders = {
+            user: new Dataloader(keys => loaders.user.batchUsers(keys))
+        }
+        return contextObj;
     }
 })
 
@@ -52,7 +54,9 @@ app.use('/', (req, res, next) => {
     res.send({ message: 'Hello yousdf' });
 });
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
     console.log(`Server listening on PORT: ${PORT}`);
     console.log(`Graphql EndpoinT: ${apolloServer.graphqlPath}`);
 });
+
+apolloServer.installSubscriptionHandlers(httpServer);
